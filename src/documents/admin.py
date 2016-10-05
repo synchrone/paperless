@@ -2,6 +2,8 @@ from django.contrib import admin
 from django.contrib.auth.models import User, Group
 from django.core.urlresolvers import reverse
 from django.templatetags.static import static
+from django.conf import settings
+from yandex_translate import YandexTranslateException
 
 from .models import Correspondent, Tag, Document, Log
 
@@ -46,6 +48,37 @@ class TagAdmin(admin.ModelAdmin):
 
 
 class DocumentAdmin(admin.ModelAdmin):
+
+    def translate_action(self, request, queryset):
+        from yandex_translate import YandexTranslate
+        ya = YandexTranslate(settings.PAPERLESS_YATRANSLATE_KEY)
+
+        for doc in queryset.all():
+            length = 9999
+            pieces = [doc.content[i:i+length] for i in range(0, len(doc.content), length)]
+            translated_pieces = []
+            try:
+                for piece in pieces:
+                    try:
+                        piece = ya.translate(piece, settings.PAPERLESS_YATRANSLATE_LANG or 'en')
+                    except YandexTranslateException as ex:
+                        raise ValueError('%s failed to translate: %s' % (doc.title, ex.message))
+                    translated_pieces.append(''.join(piece['text']))
+
+                doc.translation = ''.join(translated_pieces)
+                doc.save(update_fields=("translation",))
+                self.message_user(request, '%s successfully translated' % doc.title)
+            except ValueError as doc:
+                self.message_user(request, doc.args[0])
+    translate_action.short_description = 'Translate'
+
+    actions = [translate_action]
+
+    def get_actions(self, request):
+        actions = super(DocumentAdmin, self).get_actions(request)
+        if not settings.PAPERLESS_YATRANSLATE_KEY:
+            del actions['translate_action']
+        return actions
 
     class Media:
         css = {

@@ -183,6 +183,8 @@ LOGGING = {
     },
 }
 
+PAPERLESS_YATRANSLATE_KEY = os.getenv("PAPERLESS_YATRANSLATE_KEY")
+PAPERLESS_YATRANSLATE_LANG = os.getenv("PAPERLESS_YATRANSLATE_LANG")
 
 # The default language that tesseract will attempt to use when parsing
 # documents.  It should be a 3-letter language code consistent with ISO 639.

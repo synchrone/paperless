@@ -149,6 +149,7 @@ class Document(models.Model):
         Correspondent, blank=True, null=True, related_name="documents")
     title = models.CharField(max_length=128, blank=True, db_index=True)
     content = models.TextField(db_index=True)
+    translation = models.TextField(db_index=True, null=True, blank=True)
     file_type = models.CharField(
         max_length=4,
         editable=False,
